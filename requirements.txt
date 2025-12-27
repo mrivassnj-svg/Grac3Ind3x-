@@ -1,0 +1,6 @@
+fastapi
+pydantic
+sqlalchemy>=2.0
+asyncpg
+uvicorn
+gunicorn
