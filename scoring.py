@@ -1,6 +1,43 @@
 # Mood scoring logic
 # scoring.py
 # -------------------
+from enum import Enum
+
+class Mood(Enum):
+    NEGATIVE = "negative"
+    NEUTRAL = "neutral"
+    POSITIVE = "positive"
+
+
+def score_text(text: str) -> float:
+    """
+    Returns a mood score between -1 and 1
+    """
+    positive_words = ["happy", "good", "great", "love"]
+    negative_words = ["sad", "bad", "angry", "hate"]
+
+    score = 0
+    text = text.lower()
+
+    for word in positive_words:
+        if word in text:
+            score += 1
+
+    for word in negative_words:
+        if word in text:
+            score -= 1
+
+    return max(-1, min(1, score / 3))
+
+
+def classify_mood(score: float) -> Mood:
+    if score > 0.3:
+        return Mood.POSITIVE
+    elif score < -0.3:
+        return Mood.NEGATIVE
+    return Mood.NEUTRAL
+
+
 # Handles mood scoring and classification logic
 
 WEIGHTS = {
