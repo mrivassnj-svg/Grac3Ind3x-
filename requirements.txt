@@ -1,6 +1,3 @@
-fastapi
-pydantic
-sqlalchemy>=2.0
-asyncpg
-uvicorn
-gunicorn
+gradio>=3.50
+openai>=0.27.0
+pandas
