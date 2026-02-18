@@ -1,89 +1,38 @@
 import gradio as gr
-import json
-import os
 from utils.ai_core import AnalyzeSentiment, AdaptiveRefinementEngine
 from utils.safety import CrisisDetector
-from database.database import log_entry  # Using our high-performance SQLite logic
+from scoring import score_entry # <--- CRITICAL FIX: Linking your scoring logic
 
-# Load Adaptive Pillar resources
-with open("data/resources.json", "r") as f:
-    RESOURCES = json.load(f)
-
-# Initialize the Adaptive ML Engine
-adaptive_engine = AdaptiveRefinementEngine()
-
-def grace_engine_interface(user_input, user_uuid="STUB_USER_001"):
-    """
-    Core Pipeline: Executes the G.R.A.C.E. methodology.
-    """
-    # 1. PILLAR: RESPONSE (Sentiment & NLP)
-    sentiment_report = AnalyzeSentiment(user_input)
+def grace_engine_interface(user_input, q1, q2, q3, q4, q5, q6, q7, q8, q9):
+    # 1. Compile PHQ-9 Responses
+    responses = {f"Q{i+1}": val for i, val in enumerate([q1, q2, q3, q4, q5, q6, q7, q8, q9])}
     
-    # 2. PILLAR: CARE (Immediate Crisis Detection)
-    risk_level, safety_msg = CrisisDetector.evaluate(user_input)
+    # 2. RUN YOUR SCORING LOGIC (Pillar: Response)
+    raw, weight, final, mood_class = score_entry(responses, user_input)
     
-    # 3. PILLAR: ADAPTIVE (Resource Recommendation)
-    # If risk is critical, prioritize hotlines; otherwise, use ML-selected resource
-    if risk_level == "🔴 CRITICAL":
-        resource_pathway = f"**Emergency Protocol:** Contact {RESOURCES['crisis_contacts']['national_hotline']}"
-    else:
-        best_type = adaptive_engine.get_best_resource()
-        # Fetch a random prompt from the recommended category
-        if best_type == "grounding":
-            resource_pathway = f"**Adaptive Suggestion:** {random.choice(RESOURCES['grounding_exercises'])}"
-        else:
-            resource_pathway = f"**Adaptive Suggestion:** {random.choice(RESOURCES['adaptive_prompts'])}"
-
-    # 4. PILLAR: ENGINE (High-Performance Persistence)
-    # Mapping dummy values for PHQ-9 and Velocity for this session
-    mock_phq9 = 18 if risk_level == "🔴 CRITICAL" else 8
-    mock_velocity = -2.5 # Simulated decline
+    # 3. RUN SAFETY CHECK (Pillar: Care)
+    risk_level, safety_msg = CrisisDetector.evaluate(user_input, q9_score=q9)
     
-    log_entry(
-        user_uuid=user_uuid,
-        score=mock_phq9,
-        q9=1 if "suicide" in user_input.lower() else 0,
-        sentiment=0.8 if "High" in sentiment_report else 0.2,
-        velocity=mock_velocity,
-        metadata={"raw_length": len(user_input), "resource_deployed": resource_pathway}
-    )
+    # 4. OVERRIDE Logic
+    # If the score is high (Severe), force the risk to Critical even if keywords are missing
+    if final >= 20:
+        risk_level = "🔴 CRITICAL"
+        safety_msg = "### ALERT: Severe PHQ-9 Score (20+). Immediate Triage Required."
 
-    return (
-        risk_level, 
-        sentiment_report, 
-        f"{safety_msg}\n\n---\n\n{resource_pathway}"
-    )
+    return risk_level, f"Mood: {mood_class} (Score: {final})", safety_msg
 
-# --- GRADIO INTERFACE DESIGN ---
-with gr.Blocks(title="G.R.A.C.E. Systems", theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# 📊 G.R.A.C.E. SYSTEMS")
-    gr.Markdown("### Guided Response & Adaptive Care Engine | Clinician Oversight")
-    
+# UI Setup with sliders for the 9 questions
+with gr.Blocks() as demo:
+    gr.Markdown("# G.R.A.C.E. Systems Engine")
     with gr.Row():
-        with gr.Column(scale=2):
-            inp = gr.Textbox(
-                label="Clinical Narrative / Patient Input",
-                placeholder="Type session notes or patient reflections here...",
-                lines=8
-            )
-            btn = gr.Button("🚀 Execute G.R.A.C.E. Analysis", variant="primary")
-            
-        with gr.Column(scale=1):
+        with gr.Column():
+            inp = gr.Textbox(label="Session Narrative")
+            # Adding sliders to feed the scoring.py logic
+            qs = [gr.Slider(0, 3, step=1, label=f"PHQ-9 Q{i+1}") for i in range(9)]
+        with gr.Column():
             out_risk = gr.Label(label="Safety Tier")
-            out_sent = gr.Textbox(label="Sentiment Intelligence", interactive=False)
-
-    gr.Markdown("---")
-    gr.Markdown("### 🛠️ Intervention Pathway")
-    out_alert = gr.Markdown(value="*Awaiting input analysis...*")
-    
-    btn.click(
-        grace_engine_interface, 
-        inputs=inp, 
-        outputs=[out_risk, out_sent, out_alert]
-    )
-
-if __name__ == "__main__":
-    # Ensure database exists before launch
-    from database.database import init_db
-    init_db()
-    demo.launch()
+            out_mood = gr.Textbox(label="Clinical Verdict")
+            out_path = gr.Markdown()
+            
+    btn = gr.Button("Analyze")
+    btn.click(grace_engine_interface, inputs=[inp] + qs, outputs=[out_risk, out_mood, out_path])
