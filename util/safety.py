@@ -1,19 +1,16 @@
 import re
-from scoring import detect_crisis # Importing your logic
+from scoring import detect_crisis
 
 class CrisisDetector:
+    """Pillar: Care - Evaluates immediate clinical risk."""
     @staticmethod
     def evaluate(text: str, q9_score: int = 0):
-        """
-        Pillar: Care
-        Returns: (Risk Level, Safety Message)
-        """
-        # 1. Check for PHQ-9 Item 9 (Suicidal Ideation) Hard-Trigger
+        # 1. PHQ-9 Item 9 Hard-Trigger (Ideation)
         if q9_score > 0:
-            return "🔴 CRITICAL", "### ALERT: Item 9 (Ideation) Positive. Initiate Safety Protocol."
+            return "🔴 CRITICAL", "### ALERT: Positive Suicidal Ideation marker (Item 9)."
 
-        # 2. Check for linguistic red flags
+        # 2. Linguistic Pattern Match
         if detect_crisis(text):
-            return "🔴 CRITICAL", "### ALERT: Linguistic Red Flags Detected. Urgent Outreach Advised."
+            return "🔴 CRITICAL", "### ALERT: High-risk linguistic patterns detected."
         
-        return "🟢 STABLE", "Monitoring continues."
+        return "🟢 STABLE", "Standard monitoring protocol active."
