@@ -3,3 +3,7 @@ pandas
 plotly
 scikit-learn
 python-dotenv
+sqlalchemy>=2.0.0
+asyncpg          # Required for PostgreSQL + AsyncSession
+aiosqlite        # Required for SQLite + AsyncSession
+pydantic[email]  # For UserAccount validation
