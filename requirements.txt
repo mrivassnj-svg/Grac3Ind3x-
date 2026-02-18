@@ -1,3 +1,5 @@
-gradio>=3.50
-openai>=0.27.0
+gradio
 pandas
+plotly
+scikit-learn
+python-dotenv
