@@ -1,23 +1,22 @@
-import re
 import random
 
-class AdaptiveRefinementEngine:
-    """
-    Pillar: Adaptive
-    Simulates ML personalization by tracking which coping strategies 
-    yield the most 'engagement' and refining the Care Engine's output.
-    """
-    def __init__(self):
-        # Initial success rates for different coping styles
-        self.strategy_performance = {
-            "grounding": 0.5,
-            "distraction": 0.3,
-            "social_outreach": 0.4
-        }
+class AnalyzeSentiment:
+    def __init__(self, text):
+        self.text = text
 
-    def refine_strategy(self, strategy_used, user_responded_positively):
-        """
-        Adjusts the weights of the engine based on user response.
+    def get_report(self):
+        # Integration point for your normalized scoring
+        indicators = ["hopeless", "void", "nothing", "tired", "done"]
+        score = sum(1 for word in indicators if word in self.text.lower())
+        if score > 2:
+            return "High Negative Sentiment (Hopelessness Detected)"
+        return "Stable Baseline Sentiment"
+
+class AdaptiveRefinementEngine:
+    """Pillar: Adaptive - Personalizes resources based on success."""
+    def get_best_resource(self):
+        # In a full ML version, this queries the DB for 'what worked last time'
+        return random.choice(["grounding", "outreach", "breathing"])d on user response.
         In a production environment, this would update a weights file or database.
         """
         learning_rate = 0.1
