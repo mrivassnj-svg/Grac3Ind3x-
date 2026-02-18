@@ -1,0 +1,14 @@
+{
+  "crisis_contacts": {
+    "national_hotline": "988",
+    "text_line": "741741"
+  },
+  "adaptive_prompts": [
+    "I hear that you're feeling overwhelmed. Let's focus on one small thing we can control right now.",
+    "It sounds like things are very heavy. Have you reached out to your trusted contact today?"
+  ],
+  "grounding_exercises": [
+    "5-4-3-2-1 Grounding Technique",
+    "Box Breathing (4-4-4-4)"
+  ]
+}
