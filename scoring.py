@@ -1,42 +1,39 @@
-from typing import List, Tuple
+ from typing import List, Tuple, Dict
 
-# Constants for medical flagging (Pillar: Response)
-CRISIS_KEYWORDS = ["end", "goodbye", "hurt", "die", "kill", "suicide", "pointless", "better off dead"]
+# G.R.A.C.E. CLINICAL STANDARDS
+# These map raw numeric scores to clinical interventions
+SEVERITY_MAPPING = {
+    "SEVERE": (20, 27),
+    "MODERATELY_SEVERE": (15, 19),
+    "MODERATE": (10, 14),
+    "MILD": (5, 9),
+    "MINIMAL": (0, 4)
+}
 
-def detect_crisis(text: str) -> bool:
-    """Scans for immediate red flags in the fill_word or narrative commentary."""
-    if not text:
-        return False
-    return any(word in text.lower() for word in CRISIS_KEYWORDS)
+def get_clinical_tier(numeric_score: float) -> str:
+    """Classifies final numeric scores into validated PHQ-9 mood labels."""
+    abs_score = abs(numeric_score)
+    for label, (low, high) in SEVERITY_MAPPING.items():
+        if low <= abs_score <= high:
+            return label
+    return "MINIMAL" if abs_score < 5 else "CRITICAL"
 
-def calculate_velocity(current_score: float, historical_scores: List[float]) -> float:
+def score_entry(responses: Dict[str, int], fill_word: str) -> Tuple[float, float, float, str]:
     """
-    Pillar: Adaptive
-    Calculates the 'Velocity of Decline'. 
-    A positive delta indicates worsening symptoms in PHQ-9 (0-27 scale).
+    Pillar: Response
+    Refines raw PHQ-9 inputs with fill_word sentiment analysis.
     """
-    if not historical_scores:
-        return 0.0
+    # 1. Base PHQ-9 Score (0-27)
+    raw_score = sum(responses.values())
     
-    # We compare against the average of the last 3 entries for stability
-    recent_history = historical_scores[-3:]
-    avg_historical = sum(recent_history) / len(recent_history)
+    # 2. Sentiment Adjustment (Your Logic)
+    # If the fill_word contains heavy negative sentiment, we apply a 'Weighted Penalty'
+    sentiment_penalty = 0.0
+    negative_indicators = ["void", "empty", "dark", "done", "heavy"]
+    if any(word in fill_word.lower() for word in negative_indicators):
+        sentiment_penalty = 3.0  # Significant clinical weight
+        
+    final_score = raw_score + sentiment_penalty
+    mood_class = get_clinical_tier(final_score)
     
-    return current_score - avg_historical
-
-def get_clinical_verdict(score: float, velocity: float, crisis_flag: bool) -> Tuple[str, str]:
-    """
-    Pillar: Care
-    Determines escalation level based on score severity and rate of change.
-    Note: PHQ-9 Scores 20+ are Severe.
-    """
-    # 1. Immediate Red Flag (Ideation or Extreme Severity)
-    if crisis_flag or score >= 20 or velocity >= 7:
-        return "CRITICAL_RED", "Immediate Crisis Intervention Protocol Triggered"
-    
-    # 2. Significant Deterioration
-    if score >= 15 or velocity >= 4:
-        return "YELLOW_ALERT", "Significant Clinical Decline: Schedule Urgent Review"
-    
-    # 3. Stable / Mild
-    return "STABLE_GREEN", "Routine Monitoring: No Acute Risk Detected"
+    return float(raw_score), sentiment_penalty, final_score, mood_class
