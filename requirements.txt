@@ -1,9 +1,16 @@
-gradio
-pandas
-plotly
-scikit-learn
-python-dotenv
-sqlalchemy>=2.0.0
-asyncpg          # Required for PostgreSQL + AsyncSession
-aiosqlite        # Required for SQLite + AsyncSession
-pydantic[email]  # For UserAccount validation
+# --- CORE ENGINE ---
+fastapi==0.109.0
+uvicorn==0.27.0
+gradio==4.16.0
+python-dotenv==1.0.0
+
+# --- DATA & AI ---
+sqlalchemy[asyncio]==2.0.25
+asyncpg==0.29.0       # For PostgreSQL
+aiosqlite==0.19.0     # For local SQLite development
+pydantic[email]==2.5.3
+scikit-learn==1.4.0
+pandas==2.2.0
+
+# --- UTILS ---
+httpx==0.26.0         # For UI-to-API communication
